@@ -1,0 +1,66 @@
+from typing import Optional
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Application settings, read from environment variables (or a .env file).
+
+    The server runs in one of two auth modes:
+
+    * **PAT mode** — set ``YNAB_PAT`` to a Personal Access Token. Good for local
+      stdio use and single-user self-hosting without a login flow.
+    * **OAuth mode** — set ``YNAB_OAUTH_CLIENT_ID`` / ``YNAB_OAUTH_CLIENT_SECRET``
+      (from a registered YNAB OAuth application), ``PUBLIC_URL`` (this server's
+      externally reachable base URL), and ``MCP_TOKEN_SECRET``. Clients then
+      "Sign in with YNAB"; no token is stored server-side.
+    """
+
+    # --- PAT mode ---------------------------------------------------------- #
+    ynab_api_token: Optional[str] = Field(None, alias="YNAB_PAT")
+    """A YNAB Personal Access Token. Enables PAT mode when set."""
+
+    # --- OAuth mode -------------------------------------------------------- #
+    ynab_oauth_client_id: Optional[str] = Field(None, alias="YNAB_OAUTH_CLIENT_ID")
+    ynab_oauth_client_secret: Optional[str] = Field(None, alias="YNAB_OAUTH_CLIENT_SECRET")
+    public_url: Optional[str] = Field(None, alias="PUBLIC_URL")
+    """This server's externally reachable base URL, e.g. https://x.run.app.
+    Used as the OAuth issuer and to build the YNAB redirect URI."""
+
+    token_secret: Optional[str] = Field(None, alias="MCP_TOKEN_SECRET")
+    """Fernet key used to seal issued tokens. Generate with
+    ``python -m ynab_mcp_server.gen_secret``."""
+
+    ynab_oauth_scope: Optional[str] = Field(None, alias="YNAB_OAUTH_SCOPE")
+    """Set to "read-only" for a read-only OAuth grant. Omit for full access."""
+
+    # --- Static bearer (simple self-host without OAuth) -------------------- #
+    mcp_auth_token: Optional[str] = Field(None, alias="MCP_AUTH_TOKEN")
+    """A static bearer token gating the HTTP endpoint when OAuth is not
+    configured. Used only in PAT mode over HTTP."""
+
+    # --- Behaviour --------------------------------------------------------- #
+    ynab_default_plan_id: Optional[str] = Field(None, alias="YNAB_DEFAULT_PLAN_ID")
+    """If set, the server operates in single-plan mode with this plan ID."""
+
+    ynab_read_only: bool = Field(False, alias="YNAB_READ_ONLY")
+    """If true, write tools are disabled."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    @property
+    def oauth_enabled(self) -> bool:
+        return bool(
+            self.ynab_oauth_client_id
+            and self.ynab_oauth_client_secret
+            and self.public_url
+            and self.token_secret
+        )
+
+
+settings = Settings()
