@@ -1,0 +1,28 @@
+# Cloud Build pipeline for the Deploy-YNAB-MCP trigger (push to master).
+# The trigger runs as a user-specified service account, which requires an
+# explicit logging option; autodetected Dockerfile builds don't set one.
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: ynab-mcp
+  _IMAGE: us-central1-docker.pkg.dev/ynab-mcp-503313/cloud-run-source-deploy/ynab-mcp
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_IMAGE}:${COMMIT_SHA}", "-t", "${_IMAGE}:latest", "."]
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "--all-tags", "${_IMAGE}"]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_IMAGE}:${COMMIT_SHA}
+      - --region=${_REGION}
+
+images:
+  - ${_IMAGE}:${COMMIT_SHA}
+  - ${_IMAGE}:latest
