@@ -140,6 +140,7 @@ Then point your client at `https://YOUR-SERVICE-URL/mcp` with header `Authorizat
 | `YNAB_OAUTH_SCOPE` | OAuth | Set to `read-only` for a read-only grant. Omit for full access. |
 | `YNAB_DEFAULT_PLAN_ID` | any | Lock to one plan; hides `list-plans`. |
 | `YNAB_READ_ONLY` | any | `true` disables all write tools. |
+| `YNAB_ALLOWED_USER_IDS` | any | Comma-separated YNAB user IDs allowed to use the server. OAuth sign-ins by other accounts are rejected, and a PAT belonging to another user is refused. Find yours: `curl -H "Authorization: Bearer $YNAB_PAT" https://api.ynab.com/v1/user`. Unset = no restriction. |
 
 ## Security notes
 

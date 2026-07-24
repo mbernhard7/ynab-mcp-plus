@@ -11,6 +11,7 @@ from ynab.api import (
     plans_api,
     scheduled_transactions_api,
     transactions_api,
+    user_api,
 )
 from ynab.models import (
     NewTransaction,
@@ -50,10 +51,19 @@ class YNABClient:
         )
         self._months_api = months_api.MonthsApi(self.api_client)
         self._payee_locations_api = payee_locations_api.PayeeLocationsApi(self.api_client)
+        self._user_api = user_api.UserApi(self.api_client)
 
     async def _run_sync(self, func, *args, **kwargs):
         """Run a synchronous SDK call in a worker thread."""
         return await asyncio.to_thread(func, *args, **kwargs)
+
+    # ------------------------------------------------------------------ #
+    # User
+    # ------------------------------------------------------------------ #
+    async def get_user_id(self) -> str:
+        """The YNAB user ID the client's token belongs to."""
+        response = await self._run_sync(self._user_api.get_user)
+        return str(response.data.user.id)
 
     # ------------------------------------------------------------------ #
     # Plans (formerly "budgets")

@@ -72,6 +72,7 @@ def build_oauth_app() -> Starlette:
         public_url=settings.public_url,
         token_secret=settings.token_secret,
         scope=settings.ynab_oauth_scope,
+        allowed_user_ids=settings.allowed_user_ids,
     )
 
     issuer = AnyHttpUrl(settings.public_url)

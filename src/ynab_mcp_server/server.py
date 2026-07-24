@@ -29,6 +29,9 @@ server = Server("ynab-mcp")
 # Single-user client for PAT/stdio mode, built lazily from the configured token.
 _default_client: YNABClient | None = None
 
+# Whether the configured PAT's user has been checked against YNAB_ALLOWED_USER_IDS.
+_pat_user_checked = False
+
 
 def _client() -> YNABClient:
     """Return the YNAB client for the current request.
@@ -49,6 +52,32 @@ def _client() -> YNABClient:
             raise RuntimeError("No YNAB credentials available: set YNAB_PAT, or configure OAuth.")
         _default_client = YNABClient(token=settings.ynab_api_token)
     return _default_client
+
+
+async def _check_allowed_user() -> None:
+    """Enforce YNAB_ALLOWED_USER_IDS for the PAT fallback client.
+
+    OAuth callers are validated in the auth layer (the user id is checked when
+    tokens are issued and on every request). The PAT path has no auth context,
+    so the PAT's own user is checked once here and cached.
+    """
+    allowed = settings.allowed_user_ids
+    if allowed is None:
+        return
+
+    access = get_access_token()
+    if access is not None and access.claims and access.claims.get("ynab_access_token"):
+        return  # OAuth request; already validated by the provider.
+
+    global _pat_user_checked
+    if _pat_user_checked:
+        return
+    user_id = await _client().get_user_id()
+    if user_id not in allowed:
+        raise ValueError(
+            "The configured YNAB_PAT belongs to a user not listed in YNAB_ALLOWED_USER_IDS."
+        )
+    _pat_user_checked = True
 
 
 READ_ONLY_TOOLS = {
@@ -172,7 +201,8 @@ async def _get_plan_id(arguments: dict | None) -> str:
         return arguments["plan_id"]
 
     plan = await _client().get_default_plan()
-    return plan.id
+    # The SDK models ids as UUID objects; downstream SDK calls require strings.
+    return str(plan.id)
 
 
 @server.call_tool()
@@ -184,6 +214,8 @@ async def handle_call_tool(
     """
     if settings.ynab_read_only and name not in READ_ONLY_TOOLS:
         raise ValueError("The server is in read-only mode. Write operations are disabled.")
+
+    await _check_allowed_user()
 
     if name == "list-plans":
         plans = await _client().get_plans()
@@ -208,7 +240,7 @@ async def handle_call_tool(
             return [types.TextContent(type="text", text="No accounts found for this plan.")]
 
         account_list = "\n".join(
-            f"- {acc.name} (ID: {acc.id}): {acc.balance / 1000:.2f} (Type: {acc.type})"
+            f"- {acc.name} (ID: {acc.id}): {acc.balance / 1000:.2f} (Type: {acc.type.value})"
             for acc in accounts
         )
         return [
@@ -318,11 +350,29 @@ async def handle_call_tool(
         if not payees:
             return [types.TextContent(type="text", text="No payees found for this plan.")]
 
+        total = len(payees)
+        if args.search:
+            needle = args.search.lower()
+            payees = [p for p in payees if needle in (p.name or "").lower()]
+        if args.limit is not None:
+            payees = payees[: int(args.limit)]
+
+        if not payees:
+            return [
+                types.TextContent(
+                    type="text",
+                    text=f"No payees matched '{args.search}' (out of {total} payees).",
+                )
+            ]
+
         payee_list = "\n".join(f"- {p.name} (ID: {p.id})" for p in payees)
         return [
             types.TextContent(
                 type="text",
-                text=f"Here are the payees for plan {plan_id}:\n{payee_list}",
+                text=(
+                    f"Showing {len(payees)} of {total} payees for plan {plan_id} "
+                    "(use 'search'/'limit' to narrow):\n" + payee_list
+                ),
             )
         ]
     elif name == "manage-payees":
@@ -443,9 +493,9 @@ async def handle_call_tool(
             return [types.TextContent(type="text", text="No scheduled transactions found.")]
 
         scheduled_list = "\n".join(
-            f"- {t.var_date}: {t.payee_name or 'N/A'} | "
+            f"- Next: {t.date_next}: {t.payee_name or 'N/A'} | "
             f"{t.category_name or 'N/A'} | {t.amount / 1000:.2f} "
-            f"(Frequency: {t.frequency})"
+            f"(Frequency: {t.frequency}, ID: {t.id})"
             for t in transactions
         )
         return [
@@ -466,13 +516,13 @@ async def handle_call_tool(
             if "amount" in transaction_data:
                 transaction_data["amount"] = int(transaction_data["amount"])
 
-            await _client().create_scheduled_transaction(
+            created = await _client().create_scheduled_transaction(
                 plan_id=plan_id, transaction=SaveScheduledTransaction(**transaction_data)
             )
             return [
                 types.TextContent(
                     type="text",
-                    text="Successfully created scheduled transaction.",
+                    text=f"Successfully created scheduled transaction (ID: {created.id}).",
                 )
             ]
         elif action == "update":
@@ -519,7 +569,7 @@ async def handle_call_tool(
             return [
                 types.TextContent(
                     type="text",
-                    text=f"No {args.entity_type} found with ID {args.entity_id}.",
+                    text=f"No {args.entity_type.value} found with ID {args.entity_id}.",
                 )
             ]
 
@@ -527,7 +577,7 @@ async def handle_call_tool(
         return [
             types.TextContent(
                 type="text",
-                text=f"Found {args.entity_type}:\n{json.dumps(entity_dict, indent=2, default=str)}",
+                text=f"Found {args.entity_type.value}:\n{json.dumps(entity_dict, indent=2, default=str)}",
             )
         ]
     elif name == "get-month-info":

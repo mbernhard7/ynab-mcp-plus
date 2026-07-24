@@ -35,6 +35,7 @@ from .crypto import Sealer
 
 YNAB_AUTHORIZE_URL = "https://app.ynab.com/oauth/authorize"
 YNAB_TOKEN_URL = "https://app.ynab.com/oauth/token"
+YNAB_USER_URL = "https://api.ynab.com/v1/user"
 
 # Sealed-blob lifetimes.
 _STATE_TTL = 600  # authorize -> YNAB -> callback round trip
@@ -45,10 +46,12 @@ class YnabAuthorizationCode(AuthorizationCode):
     ynab_access_token: str
     ynab_refresh_token: str
     ynab_expires_at: int
+    ynab_user_id: Optional[str] = None
 
 
 class YnabRefreshToken(RefreshToken):
     ynab_refresh_token: str
+    ynab_user_id: Optional[str] = None
 
 
 class YnabOAuthProvider:
@@ -62,13 +65,20 @@ class YnabOAuthProvider:
         public_url: str,
         token_secret: str,
         scope: Optional[str] = None,
+        allowed_user_ids: Optional[set[str]] = None,
     ):
         self.client_id = client_id
         self.client_secret = client_secret
         self.public_url = public_url.rstrip("/")
         self.scope = scope  # None => full access
+        self.allowed_user_ids = allowed_user_ids  # None => any YNAB account
         self.sealer = Sealer(token_secret)
         self.redirect_uri = f"{self.public_url}/oauth/ynab/callback"
+
+    def _user_allowed(self, ynab_user_id: Optional[str]) -> bool:
+        if self.allowed_user_ids is None:
+            return True
+        return ynab_user_id is not None and ynab_user_id in self.allowed_user_ids
 
     # ---------------------------------------------------------------- #
     # Dynamic client registration (stateless: the client_id encodes the
@@ -175,6 +185,24 @@ class YnabOAuthProvider:
                 status_code=502,
             )
 
+        ynab_user_id: Optional[str] = None
+        if self.allowed_user_ids is not None:
+            try:
+                ynab_user_id = await self._ynab_user_id(tokens["access_token"])
+            except httpx.HTTPError:
+                return JSONResponse(
+                    {"error": "server_error", "error_description": "YNAB user lookup failed"},
+                    status_code=502,
+                )
+            if not self._user_allowed(ynab_user_id):
+                return JSONResponse(
+                    {
+                        "error": "access_denied",
+                        "error_description": "This YNAB account is not allowed to use this server.",
+                    },
+                    status_code=403,
+                )
+
         our_code = self.sealer.seal(
             {
                 "t": "code",
@@ -186,6 +214,7 @@ class YnabOAuthProvider:
                 "yat": tokens["access_token"],
                 "yrt": tokens["refresh_token"],
                 "yexp": int(time.time()) + int(tokens.get("expires_in", 7200)),
+                "uid": ynab_user_id,
             }
         )
         location = construct_redirect_uri(
@@ -215,6 +244,7 @@ class YnabOAuthProvider:
             ynab_access_token=data["yat"],
             ynab_refresh_token=data["yrt"],
             ynab_expires_at=data["yexp"],
+            ynab_user_id=data.get("uid"),
         )
 
     async def exchange_authorization_code(
@@ -227,6 +257,7 @@ class YnabOAuthProvider:
             ynab_access_token=authorization_code.ynab_access_token,
             ynab_refresh_token=authorization_code.ynab_refresh_token,
             ynab_expires_at=authorization_code.ynab_expires_at,
+            ynab_user_id=authorization_code.ynab_user_id,
         )
 
     async def load_refresh_token(
@@ -242,6 +273,7 @@ class YnabOAuthProvider:
             client_id=client.client_id,
             scopes=data.get("scopes") or [],
             ynab_refresh_token=data["yrt"],
+            ynab_user_id=data.get("uid"),
         )
 
     async def exchange_refresh_token(
@@ -254,12 +286,19 @@ class YnabOAuthProvider:
             grant_type="refresh_token",
             refresh_token=refresh_token.ynab_refresh_token,
         )
+        ynab_user_id = refresh_token.ynab_user_id
+        if self.allowed_user_ids is not None and ynab_user_id is None:
+            # Token minted before the allowlist existed: look the user up now.
+            ynab_user_id = await self._ynab_user_id(tokens["access_token"])
+        if not self._user_allowed(ynab_user_id):
+            raise ValueError("This YNAB account is not allowed to use this server.")
         return self._mint(
             client_id=client.client_id,
             scopes=scopes or refresh_token.scopes,
             ynab_access_token=tokens["access_token"],
             ynab_refresh_token=tokens["refresh_token"],
             ynab_expires_at=int(time.time()) + int(tokens.get("expires_in", 7200)),
+            ynab_user_id=ynab_user_id,
         )
 
     async def load_access_token(self, token: str) -> Optional[AccessToken]:
@@ -268,12 +307,15 @@ class YnabOAuthProvider:
             return None
         if int(time.time()) >= data["yexp"]:
             return None  # expired; client will refresh
+        if not self._user_allowed(data.get("uid")):
+            # Not (or no longer) on the allowlist; treat the token as invalid.
+            return None
         return AccessToken(
             token=token,
             client_id=data["client_id"],
             scopes=data.get("scopes") or [],
             expires_at=data["yexp"],
-            claims={"ynab_access_token": data["yat"]},
+            claims={"ynab_access_token": data["yat"], "ynab_user_id": data.get("uid")},
         )
 
     async def revoke_token(self, token) -> None:
@@ -293,6 +335,7 @@ class YnabOAuthProvider:
         ynab_access_token: str,
         ynab_refresh_token: str,
         ynab_expires_at: int,
+        ynab_user_id: Optional[str] = None,
     ) -> OAuthToken:
         access = self.sealer.seal(
             {
@@ -301,6 +344,7 @@ class YnabOAuthProvider:
                 "scopes": scopes,
                 "yat": ynab_access_token,
                 "yexp": ynab_expires_at,
+                "uid": ynab_user_id,
             }
         )
         refresh = self.sealer.seal(
@@ -309,6 +353,7 @@ class YnabOAuthProvider:
                 "client_id": client_id,
                 "scopes": scopes,
                 "yrt": ynab_refresh_token,
+                "uid": ynab_user_id,
             }
         )
         expires_in = max(0, ynab_expires_at - int(time.time()))
@@ -319,6 +364,14 @@ class YnabOAuthProvider:
             refresh_token=refresh,
             scope=" ".join(scopes) if scopes else None,
         )
+
+    async def _ynab_user_id(self, access_token: str) -> str:
+        async with httpx.AsyncClient(timeout=20) as http:
+            resp = await http.get(
+                YNAB_USER_URL, headers={"Authorization": f"Bearer {access_token}"}
+            )
+            resp.raise_for_status()
+            return str(resp.json()["data"]["user"]["id"])
 
     async def _ynab_token(self, **data) -> dict:
         payload = {

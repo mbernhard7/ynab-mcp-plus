@@ -84,7 +84,10 @@ class ListCategoriesInput(PlanIdInput):
 
 
 class ListPayeesInput(PlanIdInput):
-    pass
+    search: Optional[str] = Field(
+        None, description="Case-insensitive substring to filter payee names (e.g. 'amazon')."
+    )
+    limit: Optional[float] = Field(None, description="The maximum number of payees to return.")
 
 
 class NewTransactionModel(BaseModel):

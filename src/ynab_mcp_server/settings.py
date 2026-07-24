@@ -47,11 +47,25 @@ class Settings(BaseSettings):
     ynab_read_only: bool = Field(False, alias="YNAB_READ_ONLY")
     """If true, write tools are disabled."""
 
+    ynab_allowed_user_ids: Optional[str] = Field(None, alias="YNAB_ALLOWED_USER_IDS")
+    """Comma-separated list of YNAB user IDs allowed to use this server.
+    When set, any caller whose YNAB account is not in the list is rejected
+    (both OAuth sign-ins and the configured PAT). Find your ID at
+    https://api.ynab.com/v1/user. Unset means no restriction."""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @property
+    def allowed_user_ids(self) -> Optional[set[str]]:
+        """Parsed YNAB_ALLOWED_USER_IDS, or None when no restriction is set."""
+        if not self.ynab_allowed_user_ids:
+            return None
+        ids = {part.strip() for part in self.ynab_allowed_user_ids.split(",") if part.strip()}
+        return ids or None
 
     @property
     def oauth_enabled(self) -> bool:
