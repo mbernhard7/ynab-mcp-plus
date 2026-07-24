@@ -534,7 +534,7 @@ async def handle_call_tool(
 
             await _client().update_scheduled_transaction(
                 plan_id=plan_id,
-                transaction_id=args.transaction_id,
+                scheduled_transaction_id=args.transaction_id,
                 transaction=SaveScheduledTransaction(**transaction_data),
             )
             return [
@@ -545,7 +545,7 @@ async def handle_call_tool(
             ]
         elif action == "delete":
             await _client().delete_scheduled_transaction(
-                plan_id=plan_id, transaction_id=args.transaction_id
+                plan_id=plan_id, scheduled_transaction_id=args.transaction_id
             )
             return [
                 types.TextContent(
