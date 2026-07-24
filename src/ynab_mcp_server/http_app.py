@@ -37,7 +37,7 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
-from starlette.routing import Mount, Route
+from starlette.routing import Route
 from starlette.types import ASGIApp
 
 from .oauth_provider import YnabOAuthProvider
@@ -115,7 +115,7 @@ def build_oauth_app() -> Starlette:
         ),
         Route("/oauth/ynab/callback", endpoint=provider.handle_ynab_callback, methods=["GET"]),
         *create_protected_resource_routes(resource_url, [issuer]),
-        Mount("/mcp", app=mcp_app),
+        Route("/mcp", endpoint=mcp_app),
     ]
 
     middleware = [
@@ -163,7 +163,7 @@ def build_bearer_app() -> Starlette:
         raise RuntimeError("MCP_AUTH_TOKEN is required in static bearer mode (or configure OAuth).")
     session_manager = _session_manager()
     app = Starlette(
-        routes=[Route("/healthz", healthz), Mount("/mcp", app=_AsgiMount(session_manager))],
+        routes=[Route("/healthz", healthz), Route("/mcp", endpoint=_AsgiMount(session_manager))],
         lifespan=_lifespan(session_manager),
     )
     app.add_middleware(BearerAuthMiddleware, token=token)
