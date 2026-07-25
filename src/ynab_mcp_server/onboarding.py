@@ -60,13 +60,7 @@ def _page_html() -> str:
 <h1>YNAB MCP Server</h1>
 <p class="muted">Talk to your YNAB budget from Claude or any MCP client.</p>
 
-<h2>1. Connect your client</h2>
-<p>Add a custom connector / remote MCP server with this URL:</p>
-<pre>{mcp_url}</pre>
-<p>Your client will walk you through "Sign in with YNAB" automatically. Access is
-limited to approved YNAB accounts — request access below first.</p>
-
-<h2>2. Find your YNAB user ID</h2>
+<h2>1. Find your YNAB user ID</h2>
 <p>Create a Personal Access Token at
 <a href="https://app.ynab.com/settings/developer" target="_blank" rel="noopener">app.ynab.com &rarr; Developer Settings</a>,
 then paste it here. The token is sent by <em>your browser directly to YNAB</em> — it never
@@ -77,7 +71,7 @@ touches this server, and you can delete it right after.</p>
 <p id="uid-out"></p>
 <p class="muted">Prefer the terminal? <code>curl -H "Authorization: Bearer YOUR_TOKEN" https://api.ynab.com/v1/user</code></p>
 
-<h2>3. Request access</h2>
+<h2>2. Request access</h2>
 {form_note}
 <form id="req" {"" if form_enabled else "hidden"}>
   <label for="name">Name</label>
@@ -85,13 +79,18 @@ touches this server, and you can delete it right after.</p>
   <label for="email">Email</label>
   <input id="email" name="email" type="email" required maxlength="{_MAX_FIELD}">
   <label for="user_id">YNAB user ID</label>
-  <input id="user_id" name="user_id" required maxlength="{_MAX_FIELD}" placeholder="from step 2">
+  <input id="user_id" name="user_id" required maxlength="{_MAX_FIELD}" placeholder="from step 1">
   <label for="request">What do you want to use it for?</label>
   <textarea id="request" name="request" maxlength="{_MAX_REQUEST}"></textarea>
   <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
   <button type="submit">Request access</button>
   <p id="req-out"></p>
 </form>
+
+<h2>3. Connect your client</h2>
+<p>Once you're approved, add a custom connector / remote MCP server with this URL:</p>
+<pre>{mcp_url}</pre>
+<p>Your client will walk you through "Sign in with YNAB" automatically.</p>
 
 <script>
 document.getElementById('lookup').addEventListener('click', async () => {{
