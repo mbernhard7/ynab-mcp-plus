@@ -81,6 +81,7 @@ async def _check_allowed_user() -> None:
 
 
 READ_ONLY_TOOLS = {
+    "whoami",
     "list-plans",
     "list-accounts",
     "list-transactions",
@@ -98,6 +99,14 @@ async def handle_list_tools() -> list[types.Tool]:
     List available tools.
     """
     all_tools = [
+        types.Tool(
+            name="whoami",
+            description=(
+                "Return the YNAB user ID of the authenticated user. "
+                "Useful for populating YNAB_ALLOWED_USER_IDS."
+            ),
+            inputSchema={"type": "object", "properties": {}},
+        ),
         types.Tool(
             name="list-plans",
             description="List all available YNAB plans",
@@ -217,7 +226,10 @@ async def handle_call_tool(
 
     await _check_allowed_user()
 
-    if name == "list-plans":
+    if name == "whoami":
+        user_id = await _client().get_user_id()
+        return [types.TextContent(type="text", text=f"YNAB user ID: {user_id}")]
+    elif name == "list-plans":
         plans = await _client().get_plans()
 
         if not plans:
