@@ -54,6 +54,8 @@ def _page_html() -> str:
   .ok {{ color: #16a34a; font-weight: 600; }}
   .err {{ color: #dc2626; font-weight: 600; }}
   .hp {{ position: absolute; left: -9999px; }}
+  footer {{ margin-top: 3rem; padding-top: 1rem; border-top: 1px solid rgba(128,128,128,.35);
+           font-size: .9rem; opacity: .7; }}
 </style>
 </head>
 <body>
@@ -91,6 +93,11 @@ touches this server, and you can delete it right after.</p>
 <p>Once you're approved, add a custom connector / remote MCP server with this URL:</p>
 <pre>{mcp_url}</pre>
 <p>Your client will walk you through "Sign in with YNAB" automatically.</p>
+
+<footer>
+  Open source: <a href="https://github.com/mbernhard7/ynab-mcp-plus" target="_blank"
+  rel="noopener">github.com/mbernhard7/ynab-mcp-plus</a> — self-hostable YNAB MCP server.
+</footer>
 
 <script>
 document.getElementById('lookup').addEventListener('click', async () => {{
