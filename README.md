@@ -140,7 +140,17 @@ Then point your client at `https://YOUR-SERVICE-URL/mcp` with header `Authorizat
 | `YNAB_OAUTH_SCOPE` | OAuth | Set to `read-only` for a read-only grant. Omit for full access. |
 | `YNAB_DEFAULT_PLAN_ID` | any | Lock to one plan; hides `list-plans`. |
 | `YNAB_READ_ONLY` | any | `true` disables all write tools. |
-| `YNAB_ALLOWED_USER_IDS` | any | Comma-separated YNAB user IDs allowed to use the server. OAuth sign-ins by other accounts are rejected, and a PAT belonging to another user is refused. Find yours: `curl -H "Authorization: Bearer $YNAB_PAT" https://api.ynab.com/v1/user`. Unset = no restriction. |
+| `YNAB_ALLOWED_USER_IDS` | any | Comma-separated YNAB user IDs allowed to use the server. OAuth sign-ins by other accounts are rejected, and a PAT belonging to another user is refused. Find yours with the `whoami` tool or `curl -H "Authorization: Bearer $YNAB_PAT" https://api.ynab.com/v1/user`. Unset = no restriction. |
+| `SLACK_WEBHOOK_URL` | OAuth | Slack incoming webhook for onboarding access requests. When set, the onboarding page at `/` shows a request form and submissions are posted to Slack. |
+
+## Onboarding page
+
+In OAuth mode the service root (`/`) serves a public onboarding page: how to
+connect an MCP client, how to look up your YNAB user ID (in-browser helper —
+the PAT goes straight from the visitor's browser to api.ynab.com and never
+touches this server), and, when `SLACK_WEBHOOK_URL` is set, an access-request
+form that messages the operator with the requester's name, email, YNAB user ID,
+and note, ready to paste into `YNAB_ALLOWED_USER_IDS`.
 
 ## Security notes
 

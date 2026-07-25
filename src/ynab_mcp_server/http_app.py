@@ -41,6 +41,7 @@ from starlette.routing import Route
 from starlette.types import ASGIApp
 
 from .oauth_provider import YnabOAuthProvider
+from .onboarding import handle_onboard_request, onboarding_page
 from .server import server
 from .settings import settings
 
@@ -93,6 +94,8 @@ def build_oauth_app() -> Starlette:
     )
 
     routes = [
+        Route("/", onboarding_page, methods=["GET"]),
+        Route("/onboard/request", handle_onboard_request, methods=["POST"]),
         Route("/healthz", healthz),
         Route(
             "/.well-known/oauth-authorization-server",

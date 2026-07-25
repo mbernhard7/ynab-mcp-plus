@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     ynab_read_only: bool = Field(False, alias="YNAB_READ_ONLY")
     """If true, write tools are disabled."""
 
+    slack_webhook_url: Optional[str] = Field(None, alias="SLACK_WEBHOOK_URL")
+    """Slack incoming-webhook URL for onboarding access requests. When set, the
+    onboarding page's request form is enabled and submissions are posted here."""
+
     ynab_allowed_user_ids: Optional[str] = Field(None, alias="YNAB_ALLOWED_USER_IDS")
     """Comma-separated list of YNAB user IDs allowed to use this server.
     When set, any caller whose YNAB account is not in the list is rejected
