@@ -51,6 +51,23 @@ class Settings(BaseSettings):
     """Slack incoming-webhook URL for onboarding access requests. When set, the
     onboarding page's request form is enabled and submissions are posted here."""
 
+    slack_signing_secret: Optional[str] = Field(None, alias="SLACK_SIGNING_SECRET")
+    """Signing secret of the Slack app behind the webhook. Enables the Approve
+    button: interaction callbacks to /slack/interact are verified with it."""
+
+    smtp_host: Optional[str] = Field(None, alias="SMTP_HOST")
+    """SMTP server for approval emails, e.g. smtp.gmail.com."""
+
+    smtp_port: int = Field(587, alias="SMTP_PORT")
+
+    smtp_user: Optional[str] = Field(None, alias="SMTP_USER")
+
+    smtp_pass: Optional[str] = Field(None, alias="SMTP_PASS")
+    """SMTP password — for Gmail, an App Password (myaccount.google.com/apppasswords)."""
+
+    approval_email_from: Optional[str] = Field(None, alias="APPROVAL_EMAIL_FROM")
+    """From address for approval emails. Defaults to SMTP_USER."""
+
     ynab_allowed_user_ids: Optional[str] = Field(None, alias="YNAB_ALLOWED_USER_IDS")
     """Comma-separated list of YNAB user IDs allowed to use this server.
     When set, any caller whose YNAB account is not in the list is rejected

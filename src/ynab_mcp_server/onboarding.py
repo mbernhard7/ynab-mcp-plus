@@ -13,6 +13,7 @@ import httpx
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 
+from .approvals import build_request_message
 from .settings import settings
 
 _MAX_FIELD = 200
@@ -169,17 +170,10 @@ async def handle_onboard_request(request: Request) -> JSONResponse:
             {"error": "name, email, and user_id are required"}, status_code=400
         )
 
-    message = (
-        ":wave: *New YNAB MCP access request*\n"
-        f"• *Name:* {name}\n"
-        f"• *Email:* {email}\n"
-        f"• *YNAB user ID:* `{user_id}`\n"
-        f"• *Request:* {request_text or '(none)'}\n\n"
-        "To approve, add the user ID to `YNAB_ALLOWED_USER_IDS` on the ynab-mcp service."
-    )
+    message = await build_request_message(name, email, user_id, request_text)
     try:
         async with httpx.AsyncClient(timeout=15) as http:
-            resp = await http.post(webhook, json={"text": message})
+            resp = await http.post(webhook, json=message)
             resp.raise_for_status()
     except httpx.HTTPError:
         return JSONResponse({"error": "failed to deliver request"}, status_code=502)

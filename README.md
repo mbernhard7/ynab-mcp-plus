@@ -142,6 +142,9 @@ Then point your client at `https://YOUR-SERVICE-URL/mcp` with header `Authorizat
 | `YNAB_READ_ONLY` | any | `true` disables all write tools. |
 | `YNAB_ALLOWED_USER_IDS` | any | Comma-separated YNAB user IDs allowed to use the server. OAuth sign-ins by other accounts are rejected, and a PAT belonging to another user is refused. Find yours with the `whoami` tool or `curl -H "Authorization: Bearer $YNAB_PAT" https://api.ynab.com/v1/user`. Unset = no restriction. |
 | `SLACK_WEBHOOK_URL` | OAuth | Slack incoming webhook for onboarding access requests. When set, the onboarding page at `/` shows a request form and submissions are posted to Slack. |
+| `SLACK_SIGNING_SECRET` | OAuth | Signing secret of the Slack app behind the webhook. Enables the Approve button (set the app's Interactivity Request URL to `PUBLIC_URL/slack/interact`). |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | OAuth | SMTP credentials for approval emails (e.g. `smtp.gmail.com` + a Gmail App Password). Optional; approvals work without email. |
+| `APPROVAL_EMAIL_FROM` | OAuth | From address for approval emails. Defaults to `SMTP_USER`. |
 
 ## Onboarding page
 
@@ -151,6 +154,15 @@ the PAT goes straight from the visitor's browser to api.ynab.com and never
 touches this server), and, when `SLACK_WEBHOOK_URL` is set, an access-request
 form that messages the operator with the requester's name, email, YNAB user ID,
 and note, ready to paste into `YNAB_ALLOWED_USER_IDS`.
+
+The Slack message includes an **Approve** button (plus a manual `gcloud`
+fallback command). With `SLACK_SIGNING_SECRET` set and the Slack app's
+Interactivity Request URL pointed at `PUBLIC_URL/slack/interact`, clicking
+Approve appends the requester to `YNAB_ALLOWED_USER_IDS` via the Cloud Run
+Admin API (the service updates itself; the runtime service account needs
+permission to deploy the service — the default compute SA used by the build
+trigger already has it), waits for the rollout, emails the requester when SMTP
+is configured, and reports the outcome back into the Slack thread.
 
 ## Security notes
 
