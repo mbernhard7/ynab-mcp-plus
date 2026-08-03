@@ -35,6 +35,7 @@ def _page_html() -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>YNAB MCP Server</title>
 <link rel="canonical" href="https://ynab-mcp.milestomorrow.com/">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
 <style>
   :root {{ color-scheme: light dark; }}
   body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;

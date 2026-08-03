@@ -36,11 +36,12 @@ from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse
+from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 from starlette.types import ASGIApp
 
 from .approvals import handle_slack_interact
+from .branding import ICON_PATH, ICON_SVG
 from .oauth_provider import YnabOAuthProvider
 from .onboarding import handle_onboard_request, onboarding_page
 from .server import server
@@ -49,6 +50,16 @@ from .settings import settings
 
 async def healthz(request: Request) -> PlainTextResponse:
     return PlainTextResponse("ok")
+
+
+async def icon(request: Request) -> Response:
+    # Served from this host so the advertised serverInfo icon has no
+    # cross-origin dependency, and so favicon-scraping clients get the mark too.
+    return Response(
+        ICON_SVG,
+        media_type="image/svg+xml",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 def _session_manager() -> StreamableHTTPSessionManager:
@@ -96,6 +107,8 @@ def build_oauth_app() -> Starlette:
 
     routes = [
         Route("/", onboarding_page, methods=["GET"]),
+        Route(ICON_PATH, icon, methods=["GET"]),
+        Route("/favicon.ico", icon, methods=["GET"]),
         Route("/onboard/request", handle_onboard_request, methods=["POST"]),
         Route("/slack/interact", handle_slack_interact, methods=["POST"]),
         Route("/healthz", healthz),

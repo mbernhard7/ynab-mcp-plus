@@ -8,6 +8,7 @@ from mcp.server.auth.middleware.auth_context import get_access_token
 from mcp.server.models import InitializationOptions
 from ynab.models import NewTransaction, SaveScheduledTransaction, SaveTransactionWithIdOrImportId
 
+from .branding import server_icons, website_url
 from .settings import settings
 from .tool_models import (
     BulkManageTransactionsInput,
@@ -24,7 +25,51 @@ from .tool_models import (
 )
 from .ynab_client import YNABClient
 
-server = Server("ynab-mcp")
+server = Server(
+    "ynab-mcp",
+    version="0.1.0",
+    website_url=website_url(),
+    icons=server_icons(),
+)
+
+# YNAB returns every monetary value in milliunits (1/1000 of a currency unit).
+# Formatted tool output divides by 1000 at the point of display, but paths that
+# dump a raw model dict have no such step — a caller reading that JSON sees
+# 386987 and reasonably reports it as $386,987 instead of $386.99. Convert these
+# fields before serialising so no consumer has to know the unit.
+_MILLIUNIT_FIELDS = frozenset(
+    {
+        "activity",
+        "amount",
+        "balance",
+        "budgeted",
+        "cleared_balance",
+        "goal_overall_funded",
+        "goal_overall_left",
+        "goal_target",
+        "goal_under_funded",
+        "income",
+        "to_be_budgeted",
+        "uncleared_balance",
+    }
+)
+
+
+def _to_currency(value):
+    """Recursively convert known milliunit fields to currency units."""
+    if isinstance(value, dict):
+        return {
+            k: (
+                round(v / 1000, 2)
+                if k in _MILLIUNIT_FIELDS and isinstance(v, (int, float)) and not isinstance(v, bool)
+                else _to_currency(v)
+            )
+            for k, v in value.items()
+        }
+    if isinstance(value, list):
+        return [_to_currency(v) for v in value]
+    return value
+
 
 # Single-user client for PAT/stdio mode, built lazily from the configured token.
 _default_client: YNABClient | None = None
@@ -599,9 +644,11 @@ async def handle_call_tool(
         if args.month:
             # Get a single month
             month_detail = await _client().get_plan_month(plan_id, args.month)
-            result_dict = month_detail.to_dict()
+            result_dict = _to_currency(month_detail.to_dict())
             text_output = (
-                f"Details for month {args.month}:\n{json.dumps(result_dict, indent=2, default=str)}"
+                f"Details for month {args.month} "
+                f"(all amounts are in currency units, not milliunits):\n"
+                f"{json.dumps(result_dict, indent=2, default=str)}"
             )
         else:
             # List all months
@@ -645,13 +692,11 @@ async def main():
         await server.run(
             read_stream,
             write_stream,
-            InitializationOptions(
-                server_name="ynab-mcp",
-                server_version="0.1.0",
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
-                ),
+            # Built from the Server instance so stdio advertises the same
+            # identity (icons, website_url) as the HTTP transport.
+            server.create_initialization_options(
+                notification_options=NotificationOptions(),
+                experimental_capabilities={},
             ),
         )
 
