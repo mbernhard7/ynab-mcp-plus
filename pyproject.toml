@@ -18,7 +18,10 @@ classifiers = [
     "Topic :: Office/Business :: Financial",
 ]
 dependencies = [
-    "mcp>=1.28.0",
+    # Upper bound is load-bearing: mcp 2.0.0 removed the low-level Server
+    # decorator API (@server.list_tools / @server.call_tool) that server.py is
+    # built on, replacing it with MCPServer. Raising this needs that migration.
+    "mcp>=1.28.0,<2.0.0",
     "ynab==4.3.0",
     "pydantic",
     "pydantic-settings",

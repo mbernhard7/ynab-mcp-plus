@@ -1,4 +1,4 @@
-mcp>=1.28.0
+mcp>=1.28.0,<2.0.0
 ynab==4.3.0
 pydantic
 pydantic-settings
