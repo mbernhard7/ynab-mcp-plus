@@ -377,10 +377,26 @@ async def handle_call_tool(
         if not category_groups:
             return [types.TextContent(type="text", text="No categories found for this plan.")]
 
-        output = "Here are the available categories and their status for the current month:\n"
+        # "Ready to Assign" in the YNAB UI is a month-level figure. The similarly
+        # named category in YNAB's internal group is a lifetime inflow
+        # accumulator whose balance is far larger and means something else, so
+        # state the real number up front rather than leaving it to be inferred.
+        try:
+            current_month = await _client().get_plan_month(plan_id, "current")
+            ready_to_assign = f"{current_month.to_be_budgeted / 1000:.2f}"
+        except Exception:  # noqa: BLE001 - informational header only
+            ready_to_assign = None
+
+        output = ""
+        if ready_to_assign is not None:
+            output += (
+                f"Ready to Assign (unassigned money available right now): {ready_to_assign}\n"
+            )
+        output += "Here are the available categories and their status for the current month:\n"
         for group in category_groups:
             if not group.hidden and group.categories:
-                output += f"\n--- {group.name} ---\n"
+                label = f"{group.name} (YNAB internal bookkeeping)" if group.internal else group.name
+                output += f"\n--- {label} ---\n"
                 for cat in group.categories:
                     if not cat.hidden:
                         details = (
@@ -388,6 +404,11 @@ async def handle_call_tool(
                             f"Spent: {abs(cat.activity) / 1000:.2f}, "
                             f"Balance: {cat.balance / 1000:.2f}"
                         )
+                        if group.internal:
+                            details += (
+                                "  [internal accumulator - NOT your Ready to Assign;"
+                                " see the figure at the top]"
+                            )
                         output += f"- {cat.name} (ID: {cat.id})\n  - {details}\n"
                         if cat.goal_type:
                             goal_progress = f"{cat.goal_percentage_complete or 0}%"
