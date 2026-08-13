@@ -62,6 +62,29 @@ async def icon(request: Request) -> Response:
     )
 
 
+SITEMAP_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<!-- Referenced by the sitemap index at https://milestomorrow.com/sitemap.xml.
+     Served from a route because this app has no static directory. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://ynab-mcp.milestomorrow.com/</loc>
+    <lastmod>2026-08-13</lastmod>
+  </url>
+</urlset>
+"""
+
+
+async def sitemap(request: Request) -> Response:
+    # Only the onboarding page at "/" is indexable; the OAuth and MCP routes are
+    # not pages. Kept beside the app rather than in the portfolio repo so adding
+    # a page here never means editing another repo.
+    return Response(
+        SITEMAP_XML,
+        media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
 def _session_manager() -> StreamableHTTPSessionManager:
     return StreamableHTTPSessionManager(app=server, json_response=False, stateless=True)
 
@@ -109,6 +132,7 @@ def build_oauth_app() -> Starlette:
         Route("/", onboarding_page, methods=["GET"]),
         Route(ICON_PATH, icon, methods=["GET"]),
         Route("/favicon.ico", icon, methods=["GET"]),
+        Route("/sitemap.xml", sitemap, methods=["GET"]),
         Route("/onboard/request", handle_onboard_request, methods=["POST"]),
         Route("/slack/interact", handle_slack_interact, methods=["POST"]),
         Route("/healthz", healthz),
