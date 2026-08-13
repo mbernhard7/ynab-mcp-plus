@@ -33,6 +33,22 @@ def _page_html() -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A Model Context Protocol server for YNAB that lets AI assistants read and manage your budget in plain English \u2014 13 focused tools, OAuth, and read-only mode.">
+<link rel="canonical" href="https://ynab-mcp.milestomorrow.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="YNAB MCP">
+<meta property="og:title" content="YNAB MCP \u2014 Talk to your budget in plain English.">
+<meta property="og:description" content="A Model Context Protocol server that lets AI assistants read and manage YNAB.">
+<meta property="og:url" content="https://ynab-mcp.milestomorrow.com/">
+<meta property="og:image" content="https://milestomorrow.com/og/ynab-mcp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="YNAB MCP \u2014 Talk to your budget in plain English.">
+<meta name="twitter:description" content="A Model Context Protocol server that lets AI assistants read and manage YNAB.">
+<meta name="twitter:image" content="https://milestomorrow.com/og/ynab-mcp.png">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RBTKWG11TT"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}gtag("js",new Date());gtag("config","G-RBTKWG11TT");</script>
 <title>YNAB MCP Server</title>
 <link rel="canonical" href="https://ynab-mcp.milestomorrow.com/">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
@@ -100,6 +116,7 @@ touches this server, and you can delete it right after.</p>
 <footer>
   Open source: <a href="https://github.com/mbernhard7/ynab-mcp-plus" target="_blank"
   rel="noopener">github.com/mbernhard7/ynab-mcp-plus</a> — self-hostable YNAB MCP server.
+  <br>Built by <a href="https://milestomorrow.com" target="_blank" rel="noopener">Miles Bernhard</a>.
 </footer>
 
 <script>
