@@ -11,6 +11,7 @@ Runs the MCP server over the Streamable HTTP transport in one of two modes:
 """
 
 import contextlib
+from pathlib import Path
 import hmac
 import os
 
@@ -100,7 +101,7 @@ PROJECT_JSON = """{
   "role": "solo",
   "year": 2026,
   "status": "live",
-  "card": { "image": "https://milestomorrow.com/og/ynab-mcp.png" }
+  "card": { "image": "https://ynab-mcp.milestomorrow.com/og.png" }
 }
 """
 
@@ -116,6 +117,20 @@ async def project_json(request: Request) -> Response:
         PROJECT_JSON,
         media_type="application/json",
         headers={"Cache-Control": "public, max-age=3600", "X-Robots-Tag": "noindex"},
+    )
+
+
+OG_IMAGE = Path(__file__).with_name("og.png")
+
+
+async def og_image(request: Request) -> Response:
+    # Shipped inside the package: hatchling keeps non-Python files under the
+    # package dir, so the card travels with the wheel instead of living on
+    # another origin.
+    return Response(
+        OG_IMAGE.read_bytes(),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
     )
 
 
@@ -169,6 +184,7 @@ def build_oauth_app() -> Starlette:
         Route("/sitemap.xml", sitemap, methods=["GET"]),
         Route("/robots.txt", robots, methods=["GET"]),
         Route("/.well-known/project.json", project_json, methods=["GET"]),
+        Route("/og.png", og_image, methods=["GET"]),
         Route("/onboard/request", handle_onboard_request, methods=["POST"]),
         Route("/slack/interact", handle_slack_interact, methods=["POST"]),
         Route("/healthz", healthz),
