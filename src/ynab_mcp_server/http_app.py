@@ -85,6 +85,40 @@ async def sitemap(request: Request) -> Response:
     )
 
 
+ROBOTS_TXT = """# Served by the app; this host is not behind Cloudflare's managed robots.txt.
+User-agent: *
+Allow: /
+
+Sitemap: https://milestomorrow.com/sitemap.xml
+"""
+
+PROJECT_JSON = """{
+  "name": "YNAB MCP",
+  "blurb": "A Model Context Protocol server that lets AI assistants read and manage YNAB.",
+  "about": "A stateless MCP server for YNAB: 13 focused tools, a Sign-in-with-YNAB OAuth broker that holds no long-lived tokens, a read-only mode, and one-command Docker deploys for self-hosting.",
+  "stack": ["Python", "MCP", "Starlette", "OAuth", "Cloud Run"],
+  "role": "solo",
+  "year": 2026,
+  "status": "live",
+  "card": { "image": "https://milestomorrow.com/og/ynab-mcp.png" }
+}
+"""
+
+
+async def robots(request: Request) -> Response:
+    return Response(ROBOTS_TXT, media_type="text/plain", headers={"Cache-Control": "public, max-age=3600"})
+
+
+async def project_json(request: Request) -> Response:
+    # Read by the portfolio cards. Not linked and not in any sitemap, but public
+    # — nothing sensitive belongs here.
+    return Response(
+        PROJECT_JSON,
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=3600", "X-Robots-Tag": "noindex"},
+    )
+
+
 def _session_manager() -> StreamableHTTPSessionManager:
     return StreamableHTTPSessionManager(app=server, json_response=False, stateless=True)
 
@@ -133,6 +167,8 @@ def build_oauth_app() -> Starlette:
         Route(ICON_PATH, icon, methods=["GET"]),
         Route("/favicon.ico", icon, methods=["GET"]),
         Route("/sitemap.xml", sitemap, methods=["GET"]),
+        Route("/robots.txt", robots, methods=["GET"]),
+        Route("/.well-known/project.json", project_json, methods=["GET"]),
         Route("/onboard/request", handle_onboard_request, methods=["POST"]),
         Route("/slack/interact", handle_slack_interact, methods=["POST"]),
         Route("/healthz", healthz),
