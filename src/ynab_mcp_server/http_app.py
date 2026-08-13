@@ -107,6 +107,10 @@ PROJECT = {
     ],
     "links": [
         {
+            "label": "View on GitHub",
+            "href": "https://github.com/mbernhard7/ynab-mcp-plus"
+        },
+        {
             "label": "Live server",
             "href": "https://ynab-mcp.milestomorrow.com"
         }
