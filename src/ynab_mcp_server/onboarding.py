@@ -40,13 +40,13 @@ def _page_html() -> str:
 <meta property="og:title" content="YNAB MCP \u2014 Talk to your budget in plain English.">
 <meta property="og:description" content="A Model Context Protocol server that lets AI assistants read and manage YNAB.">
 <meta property="og:url" content="https://ynab-mcp.milestomorrow.com/">
-<meta property="og:image" content="https://milestomorrow.com/og/ynab-mcp.png">
+<meta property="og:image" content="https://ynab-mcp.milestomorrow.com/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="YNAB MCP \u2014 Talk to your budget in plain English.">
 <meta name="twitter:description" content="A Model Context Protocol server that lets AI assistants read and manage YNAB.">
-<meta name="twitter:image" content="https://milestomorrow.com/og/ynab-mcp.png">
+<meta name="twitter:image" content="https://ynab-mcp.milestomorrow.com/og.png">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-RBTKWG11TT"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}gtag("js",new Date());gtag("config","G-RBTKWG11TT");</script>
 <title>YNAB MCP Server</title>
