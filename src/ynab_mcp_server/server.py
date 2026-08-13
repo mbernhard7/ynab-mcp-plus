@@ -5,7 +5,6 @@ import mcp.server.stdio
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.auth.middleware.auth_context import get_access_token
-from mcp.server.models import InitializationOptions
 from ynab.models import NewTransaction, SaveScheduledTransaction, SaveTransactionWithIdOrImportId
 
 from .branding import server_icons, website_url
@@ -61,7 +60,9 @@ def _to_currency(value):
         return {
             k: (
                 round(v / 1000, 2)
-                if k in _MILLIUNIT_FIELDS and isinstance(v, (int, float)) and not isinstance(v, bool)
+                if k in _MILLIUNIT_FIELDS
+                and isinstance(v, (int, float))
+                and not isinstance(v, bool)
                 else _to_currency(v)
             )
             for k, v in value.items()
@@ -389,13 +390,13 @@ async def handle_call_tool(
 
         output = ""
         if ready_to_assign is not None:
-            output += (
-                f"Ready to Assign (unassigned money available right now): {ready_to_assign}\n"
-            )
+            output += f"Ready to Assign (unassigned money available right now): {ready_to_assign}\n"
         output += "Here are the available categories and their status for the current month:\n"
         for group in category_groups:
             if not group.hidden and group.categories:
-                label = f"{group.name} (YNAB internal bookkeeping)" if group.internal else group.name
+                label = (
+                    f"{group.name} (YNAB internal bookkeeping)" if group.internal else group.name
+                )
                 output += f"\n--- {label} ---\n"
                 for cat in group.categories:
                     if not cat.hidden:

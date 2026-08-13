@@ -185,9 +185,7 @@ async def handle_onboard_request(request: Request) -> JSONResponse:
     user_id = (body.get("user_id") or "").strip()[:_MAX_FIELD]
     request_text = (body.get("request") or "").strip()[:_MAX_REQUEST]
     if not name or not email or not user_id:
-        return JSONResponse(
-            {"error": "name, email, and user_id are required"}, status_code=400
-        )
+        return JSONResponse({"error": "name, email, and user_id are required"}, status_code=400)
 
     message = await build_request_message(name, email, user_id, request_text)
     try:

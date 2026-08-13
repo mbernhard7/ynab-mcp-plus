@@ -137,7 +137,7 @@ def _send_email_sync(to_email: str, name: str) -> None:
         "Your access request to the YNAB MCP server was approved. You can now "
         "connect your MCP client:\n\n"
         f"  1. Add a remote MCP server / custom connector with URL: {connect_url}/mcp\n"
-        '  2. Sign in with YNAB when prompted.\n\n'
+        "  2. Sign in with YNAB when prompted.\n\n"
         f"Setup instructions: {connect_url}/\n\n"
         "Happy budgeting!"
     )
@@ -254,9 +254,7 @@ async def handle_slack_interact(request: Request) -> Response:
 # ------------------------------------------------------------------ #
 # Slack message construction (used by the onboarding form handler)
 # ------------------------------------------------------------------ #
-async def build_request_message(
-    name: str, email: str, user_id: str, request_text: str
-) -> dict:
+async def build_request_message(name: str, email: str, user_id: str, request_text: str) -> dict:
     project, region, service = await gcp_context()
     current = settings.allowed_user_ids or set()
     merged = ",".join(sorted(current | {user_id}))
@@ -296,9 +294,7 @@ async def build_request_message(
         },
         {
             "type": "context",
-            "elements": [
-                {"type": "mrkdwn", "text": f"Manual fallback: `{fallback_cmd}`"}
-            ],
+            "elements": [{"type": "mrkdwn", "text": f"Manual fallback: `{fallback_cmd}`"}],
         },
     ]
     return {"text": f"New YNAB MCP access request from {name} ({email})", "blocks": blocks}
