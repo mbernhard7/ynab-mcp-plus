@@ -96,8 +96,8 @@ Sitemap: https://milestomorrow.com/sitemap.xml
 PROJECT_JSON = """{
   "name": "YNAB MCP",
   "blurb": "A Model Context Protocol server that lets AI assistants read and manage YNAB.",
-  "about": "A Model Context Protocol server for YNAB with 13 focused tools, so an assistant can read balances and manage a budget in plain English. The Sign-in-with-YNAB OAuth broker is stateless and holds no long-lived tokens, there is a read-only mode for safety, and one command deploys it to Docker or Cloud Run.",
-  "stack": ["Python", "MCP", "Starlette", "OAuth", "Cloud Run"],
+  "about": "A Model Context Protocol server for YNAB that lets AI assistants read and manage your budget through natural language \u2014 13 focused tools, a stateless \"Sign in with YNAB\" OAuth broker, read-only mode, and one-command Docker deploys for self-hosting.",
+  "stack": ["TypeScript", "MCP", "OAuth", "Docker", "Cloud Run"],
   "role": "solo",
   "year": 2026,
   "status": "live",
