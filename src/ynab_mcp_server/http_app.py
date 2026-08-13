@@ -11,10 +11,10 @@ Runs the MCP server over the Streamable HTTP transport in one of two modes:
 """
 
 import contextlib
-import json
-from pathlib import Path
 import hmac
+import json
 import os
+from pathlib import Path
 
 import uvicorn
 from mcp.server.auth.handlers.authorize import AuthorizationHandler
@@ -97,32 +97,20 @@ Sitemap: https://milestomorrow.com/sitemap.xml
 PROJECT = {
     "name": "ynab-mcp-plus",
     "blurb": "A Model Context Protocol server that lets AI assistants read and manage YNAB.",
-    "about": "A Model Context Protocol server for YNAB that lets AI assistants read and manage your budget through natural language — 13 focused tools, a stateless \"Sign in with YNAB\" OAuth broker, read-only mode, and one-command Docker deploys for self-hosting.",
-    "stack": [
-        "TypeScript",
-        "MCP",
-        "OAuth",
-        "Docker",
-        "Cloud Run"
-    ],
+    "about": 'A Model Context Protocol server for YNAB that lets AI assistants read and manage your budget through natural language — 13 focused tools, a stateless "Sign in with YNAB" OAuth broker, read-only mode, and one-command Docker deploys for self-hosting.',
+    "stack": ["TypeScript", "MCP", "OAuth", "Docker", "Cloud Run"],
     "links": [
-        {
-            "label": "View on GitHub",
-            "href": "https://github.com/mbernhard7/ynab-mcp-plus"
-        },
-        {
-            "label": "Live server",
-            "href": "https://ynab-mcp.milestomorrow.com"
-        }
+        {"label": "View on GitHub", "href": "https://github.com/mbernhard7/ynab-mcp-plus"},
+        {"label": "Live server", "href": "https://ynab-mcp.milestomorrow.com"},
     ],
-    "card": {
-        "image": "https://ynab-mcp.milestomorrow.com/og.png"
-    }
+    "card": {"image": "https://ynab-mcp.milestomorrow.com/og.png"},
 }
 
 
 async def robots(request: Request) -> Response:
-    return Response(ROBOTS_TXT, media_type="text/plain", headers={"Cache-Control": "public, max-age=3600"})
+    return Response(
+        ROBOTS_TXT, media_type="text/plain", headers={"Cache-Control": "public, max-age=3600"}
+    )
 
 
 async def project_json(request: Request) -> Response:
