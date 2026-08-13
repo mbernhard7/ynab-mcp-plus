@@ -12,20 +12,28 @@ from mcp.types import Icon
 from .settings import settings
 
 # The mark, inlined rather than shipped as package data so it survives any
-# packaging layout the container build happens to use.
+# packaging layout the container build happens to use. A Y for YNAB, with the
+# dotted legs closing it into an M; it replaces the personal monogram this
+# server used to borrow from the portfolio site.
 ICON_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
-    '<defs><linearGradient id="logoGrad" x1="0" y1="1" x2="1" y2="0">'
-    '<stop offset="0" stop-color="#a3e635"/>'
-    '<stop offset="0.55" stop-color="#34d399"/>'
-    '<stop offset="1" stop-color="#2dd4a8"/>'
+    '<defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0">'
+    '<stop offset="0" stop-color="#bfdbfe"/>'
+    '<stop offset="0.55" stop-color="#60a5fa"/>'
+    '<stop offset="1" stop-color="#2563eb"/>'
     "</linearGradient></defs>"
-    '<rect width="64" height="64" rx="16" fill="url(#logoGrad)"/>'
-    '<path d="M10.5 52 L 15.28 18 L 24.78 18 L 32.61 29.82 L 43.54 18.48 L 39.62 14.83 '
-    'L 56.09 11.85 L 53.95 28.17 L 50.03 24.52 L 30.4 44.88 L 22.65 33.17 L 20 52 Z" '
-    'fill="#0a0c12"/>'
-    '<path d="M41.5 52 L 43.75 36 L 53.25 36 L 51 52 Z" fill="#0a0c12"/>'
-    "</svg>"
+    '<rect width="64" height="64" rx="16" fill="url(#g)"/>'
+    '<g stroke="#0a0c12" stroke-linecap="round">'
+    '<g stroke-width="6" stroke-dasharray="0.1 9.9">'
+    '<path d="M19 28 V48"/><path d="M45 28 V48"/>'
+    "</g>"
+    '<g stroke-width="4.5">'
+    '<path d="M32 34 L20 21"/><path d="M32 34 L44 21"/><path d="M32 34 L32 47"/>'
+    "</g></g>"
+    '<g fill="#0a0c12">'
+    '<circle cx="19" cy="19" r="6"/><circle cx="45" cy="19" r="6"/>'
+    '<circle cx="32" cy="48" r="6"/>'
+    "</g></svg>"
 )
 
 ICON_PATH = "/icon.svg"
