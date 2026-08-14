@@ -47,8 +47,25 @@ def _page_html() -> str:
 <meta name="twitter:title" content="YNAB MCP \u2014 Talk to your budget in plain English.">
 <meta name="twitter:description" content="A Model Context Protocol server that lets AI assistants read and manage YNAB.">
 <meta name="twitter:image" content="https://ynab-mcp.milestomorrow.com/og.png">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-RBTKWG11TT"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}gtag("js",new Date());gtag("config","G-RBTKWG11TT");</script>
+<script>
+// Analytics, with an owner kill switch: visiting any page with ?notrack=1
+// sets a device-local flag that silences GA (?notrack=0 clears it).
+(function () {{
+  try {{
+    var q = new URLSearchParams(location.search);
+    if (q.has("notrack")) q.get("notrack") === "0" ? localStorage.removeItem("mt-notrack") : localStorage.setItem("mt-notrack", "1");
+    if (localStorage.getItem("mt-notrack")) return;
+  }} catch (e) {{}}
+  var g = document.createElement("script");
+  g.async = true;
+  g.src = "https://www.googletagmanager.com/gtag/js?id=G-RBTKWG11TT";
+  document.head.appendChild(g);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () {{ dataLayer.push(arguments); }};
+  gtag("js", new Date());
+  gtag("config", "G-RBTKWG11TT");
+}})();
+</script>
 <title>YNAB MCP Server</title>
 <link rel="canonical" href="https://ynab-mcp.milestomorrow.com/">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
