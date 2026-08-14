@@ -49,12 +49,24 @@ def _page_html() -> str:
 <meta name="twitter:image" content="https://ynab-mcp.milestomorrow.com/og.png">
 <script>
 // Analytics, with an owner kill switch: visiting any page with ?notrack=1
-// sets a device-local flag that silences GA (?notrack=0 clears it).
+// silences the analytics tags (?notrack=0 clears it). The flag is a cookie
+// scoped to .milestomorrow.com, so one visit covers every site on the domain.
+// localStorage is still read, so per-origin opt-outs made before this keep
+// working, and still written for hosts a domain cookie cannot reach.
 (function () {{
+  var KEY = "mt-notrack";
   try {{
     var q = new URLSearchParams(location.search);
-    if (q.has("notrack")) q.get("notrack") === "0" ? localStorage.removeItem("mt-notrack") : localStorage.setItem("mt-notrack", "1");
-    if (localStorage.getItem("mt-notrack")) return;
+    if (q.has("notrack")) {{
+      var off = q.get("notrack") === "0";
+      document.cookie =
+        KEY + "=" + (off ? "" : "1") +
+        ";domain=.milestomorrow.com;path=/;max-age=" + (off ? 0 : 315360000) +
+        ";samesite=lax" + (location.protocol === "https:" ? ";secure" : "");
+      off ? localStorage.removeItem(KEY) : localStorage.setItem(KEY, "1");
+    }}
+    if (document.cookie.indexOf(KEY + "=1") > -1) return;
+    if (localStorage.getItem(KEY)) return;
   }} catch (e) {{}}
   var g = document.createElement("script");
   g.async = true;
