@@ -233,6 +233,16 @@ class _AsgiMount:
         self._sm = session_manager
 
     async def __call__(self, scope, receive, send):
+        # GET on /mcp is the optional Streamable-HTTP server->client push stream.
+        # This server never pushes (stateless, static tool list, no notifications
+        # or sampling), so refuse it with 405 instead of forwarding to the SDK.
+        # Otherwise clients open the stream, the server holds it until the 300s
+        # request timeout, the client reconnects, and repeat forever — billing
+        # Cloud Run CPU the whole time for a channel that carries nothing. POST
+        # (the real JSON-RPC channel) and DELETE pass through untouched.
+        if scope.get("method") == "GET":
+            await PlainTextResponse("Method Not Allowed", status_code=405)(scope, receive, send)
+            return
         await self._sm.handle_request(scope, receive, send)
 
 
