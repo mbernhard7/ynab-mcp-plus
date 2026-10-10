@@ -46,6 +46,9 @@ class ManageBudgetedAmountInput(PlanIdInput):
                 raise ValueError(
                     "'from_category_id' and 'to_category_id' are required for the 'move' action."
                 )
+            if values.get("from_category_id") == values.get("to_category_id"):
+                # Two writes against one starting allocation would net to +amount.
+                raise ValueError("'from_category_id' and 'to_category_id' must be different.")
 
         return values
 
