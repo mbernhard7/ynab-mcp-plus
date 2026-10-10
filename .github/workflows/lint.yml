@@ -25,4 +25,14 @@ jobs:
       - name: Run Ruff
         run: |
           ruff check .
-          ruff format --check . 
+          ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.22"
+      - run: uv sync --frozen --extra test
+      - run: uv run pytest
